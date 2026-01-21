@@ -9,7 +9,10 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-COPY . .
+COPY Cargo.toml Cargo.lock ./
+RUN cargo fetch
+
+COPY src ./src
 
 RUN cargo build --release
 
@@ -23,7 +26,6 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# 👇 CHANGE THIS to your actual binary name
 COPY --from=builder /app/target/release/server_hex /usr/local/bin/app
 
 EXPOSE 3000
