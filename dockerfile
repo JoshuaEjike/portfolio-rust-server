@@ -13,7 +13,6 @@ COPY Cargo.toml Cargo.lock ./
 RUN cargo fetch
 
 COPY src ./src
-
 RUN cargo build --release
 
 
@@ -29,5 +28,4 @@ WORKDIR /app
 COPY --from=builder /app/target/release/server_hex /usr/local/bin/app
 
 EXPOSE 3000
-
 CMD ["app"]
