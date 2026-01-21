@@ -3,6 +3,7 @@ use std::env;
 pub struct Config {
     pub database_url: String,
     pub jwt_secret: String,
+    pub port: u16,
     pub jwt_expiry_seconds: u64,
     pub db_pool_max_connections: Option<u32>,
     pub cloud_name: String,
@@ -17,6 +18,10 @@ impl Config {
         Self {
             database_url: env::var("DATABASE_URL").expect("DATABASE_URL must be set"),
             jwt_secret: env::var("JWT_SECRET").expect("JWT_SECRET must be set"),
+            port: env::var("PORT")
+                .unwrap_or_else(|_| "9400".to_string())
+                .parse::<u16>() // ✅ parse as u16
+                .expect("PORT must be a valid u16"),
             jwt_expiry_seconds: env::var("JWT_EXPIRY_SECONDS")
                 .expect("JWT_EXPIRY_SECONDS must be set")
                 .parse()

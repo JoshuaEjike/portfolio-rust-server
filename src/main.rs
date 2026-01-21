@@ -12,7 +12,7 @@ mod state;
 mod utils;
 mod utils_macros;
 
-use std::sync::Arc;
+use std::{net::SocketAddr, sync::Arc};
 
 use config::Config;
 use sqlx::postgres::PgPoolOptions;
@@ -56,9 +56,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let app = app_apis(app_state);
 
-    let listener = TcpListener::bind("127.0.0.1:9400").await?;
+    let port = config.port;
 
-    println!("🚀 Server running at http://127.0.0.1:9400");
+    let addr = SocketAddr::from(([0, 0, 0, 0], port));
+
+    let listener = TcpListener::bind(addr).await?;
+
+    println!("🚀 Server running at http://{}", addr);
 
     axum::serve(listener, app).await?;
 
