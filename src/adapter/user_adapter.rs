@@ -54,7 +54,7 @@ impl UserDBServices for PostgreUserRepository {
 
     async fn find_by_email(&self, email: &Email) -> Result<Option<Users>, AuthError> {
         let row = sqlx::query!(
-            "SELECT id, email, name, phone_number, roles, password, created_at, updated_at FROM users WHERE email=$1",
+            r#"SELECT id, email, name, phone_number, roles, password, created_at, updated_at FROM users WHERE email=$1"#,
             email.as_str()
         )
         .fetch_optional(&self.pool)
@@ -85,7 +85,7 @@ impl UserDBServices for PostgreUserRepository {
 
     async fn find_by_id(&self, user_id: &UserId) -> Result<Option<Users>, AuthError> {
         let row = sqlx::query!(
-            "SELECT id, email, name, phone_number, roles, password, created_at, updated_at FROM users WHERE id=$1",
+            r#"SELECT id, email, name, phone_number, roles, password, created_at, updated_at FROM users WHERE id=$1"#,
             user_id.as_uuid(),
         )
         .fetch_optional(&self.pool)
