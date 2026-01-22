@@ -1,9 +1,10 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
+use serde::Serialize;
 
 use crate::error::AuthError;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub struct Name(pub String);
 
 impl Name {

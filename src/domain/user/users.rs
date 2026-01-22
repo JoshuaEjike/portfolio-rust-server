@@ -1,5 +1,6 @@
 use bcrypt::{DEFAULT_COST, hash, verify};
 use chrono::NaiveDateTime;
+use serde::Serialize;
 use uuid::Uuid;
 
 use crate::error::AuthError;
@@ -8,6 +9,17 @@ use super::{
     email::Email, name::Name, password::Password, phone_number::PhoneNumber, roles::Roles,
     uuid_lib::UserId,
 };
+
+#[derive(Debug, Serialize, Clone)]
+pub struct DirectUsersDetails {
+    pub id: UserId,
+    pub name: Name,
+    pub email: Email,
+    pub phone_number: Option<PhoneNumber>,
+    pub roles: Roles,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+}
 
 #[derive(Debug, Clone)]
 pub struct Users {

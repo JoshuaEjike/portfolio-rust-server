@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use sqlx::PgPool;
 
 use crate::{
-    domain::user::{Email, Name, Password, PhoneNumber, Roles, UserId, Users},
+    domain::user::{DirectUsersDetails, Email, Name, Password, PhoneNumber, Roles, UserId, Users},
     error::AuthError,
     payload_description::UpdateUser,
     port::UserDBServices,
@@ -122,7 +122,29 @@ impl UserDBServices for PostgreUserRepository {
         todo!("update_user not implemented yet")
     }
 
-    async fn find_all_users(&self) -> Result<Vec<Users>, AuthError> {
-        todo!("find_all_users not implemented yet")
+    async fn find_all_users(&self) -> Result<Vec<DirectUsersDetails>, AuthError> {
+        let rows = sqlx::query!(
+            r#"SELECT id, email, name, phone_number, roles, created_at, updated_at FROM users"#
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| AuthError::DatabaseError(e.to_string()))?;
+
+        let users = rows
+            .into_iter()
+            .map(|user| {
+                Ok(DirectUsersDetails {
+                    id: UserId(user.id),
+                    email: Email(user.email),
+                    name: Name(user.name),
+                    roles: Roles::new(&user.roles)?,
+                    phone_number: user.phone_number.map(PhoneNumber),
+                    created_at: user.created_at,
+                    updated_at: user.updated_at,
+                })
+            })
+            .collect();
+
+        users
     }
 }

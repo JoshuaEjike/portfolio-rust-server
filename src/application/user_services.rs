@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::{
-    domain::user::{Email, Name, Password, PhoneNumber, Roles, UserId, Users},
+    domain::user::{DirectUsersDetails, Email, Name, Password, PhoneNumber, Roles, UserId, Users},
     error::AuthError,
     port::{UserDBServices, jwt::JwtService},
 };
@@ -72,5 +72,11 @@ impl AuthUserServices {
         }
 
         Ok(self.jwt.generate(&user.id.as_uuid().to_string()))
+    }
+
+    pub async fn find_all_users(&self) -> Result<Vec<DirectUsersDetails>, AuthError> {
+        let user_data = self.repo.find_all_users().await?;
+
+        Ok(user_data)
     }
 }

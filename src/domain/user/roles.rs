@@ -1,6 +1,8 @@
+use serde::Serialize;
+
 use crate::error::AuthError;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Serialize, Clone)]
 pub enum Roles {
     ROOT,
     MID,

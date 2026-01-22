@@ -1,6 +1,6 @@
 use axum::{
     Json,
-    extract::{State, rejection::JsonRejection},
+    extract::State,
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
@@ -11,6 +11,7 @@ use crate::{
     extract_or_early_return,
     payload_description::{
         AuthSuccessResponse, ErrorResponse, UserSigninPayload, UsersPayloadLoader,
+        gobal_response_description::ResponseForGettingUsersPayload,
     },
     payload_handler::auth_user_json_payload_handler,
     state::AppState,
@@ -119,6 +120,40 @@ pub async fn auth_user_sign_in_router(
             };
 
             (StatusCode::CREATED, Json(success_response)).into_response()
+        }
+        Err(err) => {
+            return error_manager(StatusCode::BAD_REQUEST, err.to_string());
+        }
+    }
+}
+
+#[axum::debug_handler]
+pub async fn get_all_users_router(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> impl IntoResponse {
+    let _ = match CurrentUser::from_headers(
+        &headers,
+        state.jwt_services.clone(),
+        state.user_repo.clone(),
+    )
+    .await
+    {
+        Ok(user) => user,
+        Err(err) => {
+            return error_manager(StatusCode::UNAUTHORIZED, err.to_string());
+        }
+    };
+
+    match state.auth_user_service.find_all_users().await {
+        Ok(users) => {
+            let success_response = ResponseForGettingUsersPayload {
+                message: "success".to_string(),
+                users,
+            };
+
+            // ✅ Works fine in axum 0.8+
+            (StatusCode::OK, Json(success_response)).into_response()
         }
         Err(err) => {
             return error_manager(StatusCode::BAD_REQUEST, err.to_string());
