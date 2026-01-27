@@ -18,3 +18,14 @@ pub struct ResponseForGettingUsersPayload {
     pub message: String,
     pub users: Vec<DirectUsersDetails>,
 }
+
+#[derive(Debug, Serialize, Clone)]
+pub struct ResponseForGettingSingleUsersPayload {
+    pub message: String,
+    pub users: Option<DirectUsersDetails>,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct SuccessMessageResponse {
+    pub message: String,
+}

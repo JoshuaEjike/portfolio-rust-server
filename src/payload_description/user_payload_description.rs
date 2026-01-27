@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-use crate::domain::user::{Email, Name, Password, PhoneNumber, UserId};
+use crate::domain::user::{Email, Name, Password, PhoneNumber, Roles, UserId};
 
 #[derive(Debug, Deserialize)]
 pub struct UpdateUserPayload {
@@ -13,15 +14,15 @@ pub struct UpdateUserPayload {
 
 #[derive(Debug)]
 pub struct UpdateUser {
-    pub user_id: UserId,
+    pub id: UserId,
     pub name: Option<Name>,
     pub email: Option<Email>,
     pub phone_number: Option<PhoneNumber>,
     pub password: Option<Password>,
-    pub roles: Option<String>,
-    pub edited_by: Option<UserId>,
-    pub edited_by_name: Option<Name>,
-    pub edited_by_email: Option<Email>,
+    pub roles: Option<Roles>,
+    pub edited_by: Uuid,
+    pub edited_by_name: String,
+    pub edited_by_email: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -37,4 +38,14 @@ pub struct UsersPayloadLoader {
 pub struct UserSigninPayload {
     pub email: Option<String>,
     pub password: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RequestUserEmailPayload {
+    pub email: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RequestUserIdPayload {
+    pub id: String,
 }

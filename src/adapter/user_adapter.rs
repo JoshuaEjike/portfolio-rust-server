@@ -114,12 +114,47 @@ impl UserDBServices for PostgreUserRepository {
             .transpose()?)
     }
 
-    async fn delete_user(&self, _user_id: &UserId) -> Result<bool, AuthError> {
-        todo!("delete_user not implemented yet")
+    async fn delete_user(&self, user_id: &UserId) -> Result<bool, AuthError> {
+        let result = sqlx::query!("DELETE FROM users where id = $1", user_id.as_uuid())
+            .execute(&self.pool)
+            .await
+            .map_err(|err| AuthError::DatabaseError(err.to_string()))?;
+
+        let deleted = result.rows_affected() > 0;
+
+        Ok(deleted)
     }
 
-    async fn update_user(&self, _users: UpdateUser) -> Result<bool, AuthError> {
-        todo!("update_user not implemented yet")
+    async fn update_user(&self, users: UpdateUser) -> Result<bool, AuthError> {
+        let result = sqlx::query!(
+            r#"
+        UPDATE users
+        SET email = COALESCE($1, email),
+            name = COALESCE($2, name),
+            phone_number = COALESCE($3, phone_number),
+            password = COALESCE($4, password),
+            roles = COALESCE($5, roles),
+            edited_by = $6,
+            edited_by_name = $7,
+            edited_by_email = $8,
+            updated_at = NOW()
+        WHERE id = $9
+        "#,
+            users.email.as_ref().map(|e| e.as_str()),
+            users.name.as_ref().map(|n| n.as_str()),
+            users.phone_number.as_ref().map(|p| p.as_str()),
+            users.password.as_ref().map(|p| p.as_str()),
+            users.roles.as_ref().map(|r| r.as_str()),
+            users.edited_by,
+            users.edited_by_name,
+            users.edited_by_email,
+            users.id.as_uuid()
+        )
+        .execute(&self.pool)
+        .await
+        .map_err(|e| AuthError::DatabaseError(e.to_string()))?;
+
+        Ok(result.rows_affected() > 0)
     }
 
     async fn find_all_users(&self) -> Result<Vec<DirectUsersDetails>, AuthError> {

@@ -1,19 +1,20 @@
 use axum::{
     Json,
-    extract::State,
+    extract::{Path, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
 
 use crate::{
-    domain::user::{Email, Name, Password, PhoneNumber, Roles},
+    domain::user::{Email, Name, Password, PhoneNumber, Roles, UserId},
     error::error_manager,
     extract_or_early_return,
     payload_description::{
-        AuthSuccessResponse, ErrorResponse, UserSigninPayload, UsersPayloadLoader,
+        AuthSuccessResponse, ErrorResponse, RequestUserEmailPayload, RequestUserIdPayload,
+        ResponseForGettingSingleUsersPayload, SuccessMessageResponse, UpdateUser,
+        UpdateUserPayload, UserSigninPayload, UsersPayloadLoader,
         gobal_response_description::ResponseForGettingUsersPayload,
     },
-    payload_handler::auth_user_json_payload_handler,
     state::AppState,
     utils::CurrentUser,
 };
@@ -148,6 +149,169 @@ pub async fn get_all_users_router(
     match state.auth_user_service.find_all_users().await {
         Ok(users) => {
             let success_response = ResponseForGettingUsersPayload {
+                message: "success".to_string(),
+                users,
+            };
+
+            // ✅ Works fine in axum 0.8+
+            (StatusCode::OK, Json(success_response)).into_response()
+        }
+        Err(err) => {
+            return error_manager(StatusCode::BAD_REQUEST, err.to_string());
+        }
+    }
+}
+
+#[axum::debug_handler]
+pub async fn get_delete_user_router(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path(path): Path<RequestUserIdPayload>,
+) -> impl IntoResponse {
+    let _ = match CurrentUser::from_headers(
+        &headers,
+        state.jwt_services.clone(),
+        state.user_repo.clone(),
+    )
+    .await
+    {
+        Ok(user) => user,
+        Err(err) => {
+            return error_manager(StatusCode::UNAUTHORIZED, err.to_string());
+        }
+    };
+
+    let user_id = match UserId::from_str(&path.id) {
+        Ok(data) => data,
+        Err(err) => {
+            return error_manager(StatusCode::BAD_REQUEST, err.to_string());
+        }
+    };
+
+    match state.auth_user_service.delete_user(&user_id).await {
+        Ok(_users_data) => {
+            let success_response = SuccessMessageResponse {
+                message: "success".to_string(),
+            };
+
+            // ✅ Works fine in axum 0.8+
+            (StatusCode::OK, Json(success_response)).into_response()
+        }
+        Err(err) => {
+            return error_manager(StatusCode::BAD_REQUEST, err.to_string());
+        }
+    }
+}
+
+#[axum::debug_handler]
+pub async fn get_update_user_router(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path(path): Path<RequestUserIdPayload>,
+    Json(payload_data): Json<UpdateUserPayload>,
+) -> impl IntoResponse {
+    let user = match CurrentUser::from_headers(
+        &headers,
+        state.jwt_services.clone(),
+        state.user_repo.clone(),
+    )
+    .await
+    {
+        Ok(user) => user,
+        Err(err) => {
+            return error_manager(StatusCode::UNAUTHORIZED, err.to_string());
+        }
+    };
+
+    let user_id = match UserId::from_str(&path.id) {
+        Ok(data) => data,
+        Err(err) => {
+            return error_manager(StatusCode::BAD_REQUEST, err.to_string());
+        }
+    };
+
+    if let Some(role) = payload_data.roles.as_deref() {
+        let role = extract_or_early_return!(Roles::new(role));
+
+        if role.as_str() == "root" {
+            return error_manager(
+                StatusCode::FORBIDDEN,
+                "This admin level can't be updated".to_string(),
+            );
+        }
+    }
+
+    if user.0.roles.as_str() == "normal" {
+        return error_manager(
+            StatusCode::FORBIDDEN,
+            "Becuase of your ADMIN Level you can not update a user.".to_string(),
+        );
+    }
+
+    let name = payload_data.name.as_deref().and_then(|n| Name::new(n).ok());
+
+    let email = payload_data
+        .email
+        .as_deref()
+        .and_then(|n| Email::new(n).ok());
+
+    let phone_number = payload_data
+        .phone_number
+        .as_deref()
+        .and_then(|n| PhoneNumber::new(n).ok());
+
+    let password = payload_data
+        .password
+        .as_deref()
+        .and_then(|n| Password::new(n).ok());
+
+    let roles = payload_data
+        .roles
+        .as_deref()
+        .and_then(|n| Roles::new(n).ok());
+
+    let updated_product = UpdateUser {
+        id: user_id.clone(),
+        name,
+        email,
+        phone_number,
+        password,
+        roles,
+        edited_by: user.0.id.as_uuid(),
+        edited_by_name: user.0.email.as_str().to_string(),
+        edited_by_email: user.0.name.as_str().to_string(),
+    };
+
+    match state.auth_user_service.update_user(updated_product).await {
+        Ok(_users_data) => {
+            let success_response = SuccessMessageResponse {
+                message: "success".to_string(),
+            };
+
+            // ✅ Works fine in axum 0.8+
+            (StatusCode::OK, Json(success_response)).into_response()
+        }
+        Err(err) => {
+            return error_manager(StatusCode::BAD_REQUEST, err.to_string());
+        }
+    }
+}
+
+#[axum::debug_handler]
+pub async fn get_single_user_router(
+    State(state): State<AppState>,
+    Path(path): Path<RequestUserEmailPayload>,
+) -> impl IntoResponse {
+    let email = match Email::new(&path.email) {
+        Ok(data) => data,
+        Err(err) => {
+            return error_manager(StatusCode::BAD_REQUEST, err.to_string());
+        }
+    };
+
+    match state.auth_user_service.find_single_user(&email).await {
+        Ok(users) => {
+            let success_response = ResponseForGettingSingleUsersPayload {
                 message: "success".to_string(),
                 users,
             };

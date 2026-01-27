@@ -17,6 +17,10 @@ impl UserId {
         Uuid::parse_str(input)
     }
 
+    // pub fn new(id: String) -> Result<Self, uuid::Error> {
+    //     Ok(Self(Uuid::parse_str(&id)?))
+    // }
+
     pub fn as_string(&self) -> String {
         self.0.to_string()
     }

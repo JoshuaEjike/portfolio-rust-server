@@ -1,3 +1,5 @@
+pub mod user_api_routers;
+
 use axum::{
     Json, Router,
     body::Body,
@@ -14,8 +16,6 @@ use crate::{
     payload_description::ErrorResponse,
     state::AppState,
 };
-
-pub mod user_api_routers;
 
 pub fn app_apis(state: AppState) -> Router {
     Router::new()

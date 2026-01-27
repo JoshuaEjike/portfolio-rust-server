@@ -1,6 +1,6 @@
 use bcrypt::{DEFAULT_COST, hash, verify};
 use chrono::NaiveDateTime;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::error::AuthError;

@@ -3,6 +3,7 @@ use std::sync::Arc;
 use crate::{
     domain::user::{DirectUsersDetails, Email, Name, Password, PhoneNumber, Roles, UserId, Users},
     error::AuthError,
+    payload_description::UpdateUser,
     port::{UserDBServices, jwt::JwtService},
 };
 
@@ -78,5 +79,50 @@ impl AuthUserServices {
         let user_data = self.repo.find_all_users().await?;
 
         Ok(user_data)
+    }
+
+    pub async fn find_single_user(
+        &self,
+        email: &Email,
+    ) -> Result<Option<DirectUsersDetails>, AuthError> {
+        let user = self
+            .repo
+            .find_by_email(&email)
+            .await?
+            .ok_or(AuthError::UserNotFound)?;
+
+        Ok(Some(DirectUsersDetails {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            phone_number: user.phone_number,
+            roles: user.roles,
+            created_at: user.created_at,
+            updated_at: user.updated_at,
+        }))
+    }
+
+    pub async fn delete_user(&self, user_id: &UserId) -> Result<bool, AuthError> {
+        let user_data = self.repo.delete_user(&user_id).await?;
+
+        if !user_data {
+            return Err(AuthError::UserNotFound);
+        }
+
+        Ok(true)
+    }
+
+    pub async fn update_user(&self, users: UpdateUser) -> Result<bool, AuthError> {
+        if self.repo.find_by_id(&users.id).await?.is_none() {
+            return Err(AuthError::UserNotFound);
+        }
+
+        let user_data = self.repo.update_user(users).await?;
+
+        if !user_data {
+            return Err(AuthError::UserNotFound);
+        }
+
+        Ok(true)
     }
 }
