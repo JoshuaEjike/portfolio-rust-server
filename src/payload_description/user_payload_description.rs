@@ -46,7 +46,6 @@ pub struct UsersPayloadLoader {
     pub password: Option<String>,
 }
 
-
 #[derive(Debug, Deserialize)]
 pub struct UserSigninPayload {
     pub email: Option<String>,

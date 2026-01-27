@@ -9,10 +9,8 @@ use axum::{
 use tower::ServiceBuilder;
 
 use crate::{
-    api::user_api_routers::user_api_router,
-    error::handle_404_with_path,
-    payload_description::ErrorResponse,
-    state::AppState,
+    api::user_api_routers::user_api_router, error::handle_404_with_path,
+    payload_description::ErrorResponse, state::AppState,
 };
 
 pub fn app_apis(state: AppState) -> Router {

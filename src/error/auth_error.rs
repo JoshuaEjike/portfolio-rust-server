@@ -20,7 +20,6 @@ pub enum AuthError {
 
     // #[error("Forbidden: {0}")]
     // Internal(String),
-
     #[error("{0} is not a valid email address")]
     EmailValidationError(String),
     #[error("Full Name must only contain alphabet and some special charaters.")]

@@ -10,7 +10,10 @@ use crate::{
     error::error_manager,
     extract_or_early_return,
     payload_description::{
-        AuthSuccessResponse, ErrorResponse, RequestUserEmailPayload, RequestUserIdPayload, ResponseForGettingSingleUsersPayload, SignUpUserData, SuccessMessageResponse, UpdateUser, UpdateUserPayload, UserSigninPayload, UsersPayloadLoader, gobal_response_description::ResponseForGettingUsersPayload
+        AuthSuccessResponse, ErrorResponse, RequestUserEmailPayload, RequestUserIdPayload,
+        ResponseForGettingSingleUsersPayload, SignUpUserData, SuccessMessageResponse, UpdateUser,
+        UpdateUserPayload, UserSigninPayload, UsersPayloadLoader,
+        gobal_response_description::ResponseForGettingUsersPayload,
     },
     state::AppState,
     utils::CurrentUser,
@@ -67,7 +70,7 @@ pub async fn auth_user_sign_up_router(
     let roles = extract_or_early_return!(Roles::new(&roles_str));
     let password = extract_or_early_return!(Password::new(&password_str));
 
-    let user = SignUpUserData{
+    let user = SignUpUserData {
         name,
         email,
         password,
@@ -78,13 +81,7 @@ pub async fn auth_user_sign_up_router(
         created_by_email: Some(current_user.0.email),
     };
 
-    match state
-        .auth_user_service
-        .sign_up_user(
-            user,
-        )
-        .await
-    {
+    match state.auth_user_service.sign_up_user(user).await {
         Ok(token) => {
             let success_response = AuthSuccessResponse {
                 token,
@@ -93,9 +90,7 @@ pub async fn auth_user_sign_up_router(
 
             (StatusCode::CREATED, Json(success_response)).into_response()
         }
-        Err(err) => {
-            error_manager(StatusCode::BAD_REQUEST, err.to_string())
-        }
+        Err(err) => error_manager(StatusCode::BAD_REQUEST, err.to_string()),
     }
 }
 
@@ -123,9 +118,7 @@ pub async fn auth_user_sign_in_router(
 
             (StatusCode::CREATED, Json(success_response)).into_response()
         }
-        Err(err) => {
-            error_manager(StatusCode::BAD_REQUEST, err.to_string())
-        }
+        Err(err) => error_manager(StatusCode::BAD_REQUEST, err.to_string()),
     }
 }
 
@@ -157,9 +150,7 @@ pub async fn get_all_users_router(
             // ✅ Works fine in axum 0.8+
             (StatusCode::OK, Json(success_response)).into_response()
         }
-        Err(err) => {
-             error_manager(StatusCode::BAD_REQUEST, err.to_string())
-        }
+        Err(err) => error_manager(StatusCode::BAD_REQUEST, err.to_string()),
     }
 }
 
@@ -198,9 +189,7 @@ pub async fn get_delete_user_router(
             // ✅ Works fine in axum 0.8+
             (StatusCode::OK, Json(success_response)).into_response()
         }
-        Err(err) => {
-             error_manager(StatusCode::BAD_REQUEST, err.to_string())
-        }
+        Err(err) => error_manager(StatusCode::BAD_REQUEST, err.to_string()),
     }
 }
 
@@ -292,9 +281,7 @@ pub async fn get_update_user_router(
             // ✅ Works fine in axum 0.8+
             (StatusCode::OK, Json(success_response)).into_response()
         }
-        Err(err) => {
-             error_manager(StatusCode::BAD_REQUEST, err.to_string())
-        }
+        Err(err) => error_manager(StatusCode::BAD_REQUEST, err.to_string()),
     }
 }
 
@@ -320,8 +307,6 @@ pub async fn get_single_user_router(
             // ✅ Works fine in axum 0.8+
             (StatusCode::OK, Json(success_response)).into_response()
         }
-        Err(err) => {
-             error_manager(StatusCode::BAD_REQUEST, err.to_string())
-        }
+        Err(err) => error_manager(StatusCode::BAD_REQUEST, err.to_string()),
     }
 }

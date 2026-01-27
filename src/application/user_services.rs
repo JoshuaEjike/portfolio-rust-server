@@ -20,10 +20,7 @@ impl AuthUserServices {
         Self { repo, jwt }
     }
 
-    pub async fn sign_up_user(
-        &self,
-        data: SignUpUserData
-    ) -> Result<String, AuthError> {
+    pub async fn sign_up_user(&self, data: SignUpUserData) -> Result<String, AuthError> {
         if self.repo.find_by_email(&data.email).await?.is_some() {
             return Err(AuthError::UserExists);
         }
@@ -45,7 +42,6 @@ impl AuthUserServices {
             .find_by_email(email)
             .await?
             .ok_or(AuthError::UserNotFound)?;
-
 
         if !user.verify_password(password) {
             return Err(AuthError::PasswordDoesNotMatchError(

@@ -40,9 +40,7 @@ pub struct Users {
 }
 
 impl Users {
-    pub fn new(
-        data: SignUpUserData
-    ) -> Result<Self, AuthError> {
+    pub fn new(data: SignUpUserData) -> Result<Self, AuthError> {
         let hash_password =
             hash(data.password.as_str(), DEFAULT_COST).map_err(|_| AuthError::HashError)?;
 

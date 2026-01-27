@@ -165,8 +165,7 @@ impl UserDBServices for PostgreUserRepository {
         .await
         .map_err(|e| AuthError::DatabaseError(e.to_string()))?;
 
-        rows
-            .into_iter()
+        rows.into_iter()
             .map(|user| {
                 Ok(DirectUsersDetails {
                     id: UserId(user.id),
