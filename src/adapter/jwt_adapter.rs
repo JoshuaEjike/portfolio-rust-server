@@ -65,7 +65,7 @@ impl JwtService for JwtServiceImpl {
                 Some(data.claims.sub)
             }
             Err(err) => {
-                println!("❌ JWT decode error: {:?}", err);
+                println!("❌ JWT decode error: {err:?}");
                 None
             }
         }

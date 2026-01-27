@@ -11,3 +11,4 @@ pub use user_payload_description::UpdateUser;
 pub use user_payload_description::UpdateUserPayload;
 pub use user_payload_description::UserSigninPayload;
 pub use user_payload_description::UsersPayloadLoader;
+pub use user_payload_description::SignUpUserData;

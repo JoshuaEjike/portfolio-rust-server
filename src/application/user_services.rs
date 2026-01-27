@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use crate::{
-    domain::user::{DirectUsersDetails, Email, Name, Password, PhoneNumber, Roles, UserId, Users},
+    domain::user::{DirectUsersDetails, Email, Password, UserId, Users},
     error::AuthError,
-    payload_description::UpdateUser,
+    payload_description::{SignUpUserData, UpdateUser},
     port::{UserDBServices, jwt::JwtService},
 };
 
@@ -22,31 +22,15 @@ impl AuthUserServices {
 
     pub async fn sign_up_user(
         &self,
-        name: Name,
-        email: Email,
-        phone_number: Option<PhoneNumber>,
-        roles: Roles,
-        password: Password,
-        created_by: Option<UserId>,
-        created_by_name: Option<Name>,
-        created_by_email: Option<Email>,
+        data: SignUpUserData
     ) -> Result<String, AuthError> {
-        if self.repo.find_by_email(&email).await?.is_some() {
+        if self.repo.find_by_email(&data.email).await?.is_some() {
             return Err(AuthError::UserExists);
         }
 
-        let user = Users::new(
-            name,
-            email,
-            phone_number,
-            roles,
-            password,
-            created_by,
-            created_by_name,
-            created_by_email,
-        )?;
+        let user = Users::new(data)?;
 
-        let _ = self.repo.create_user(&user).await?;
+        self.repo.create_user(&user).await?;
 
         Ok(self.jwt.generate(&user.id.as_uuid().to_string()))
     }
@@ -58,15 +42,12 @@ impl AuthUserServices {
     ) -> Result<String, AuthError> {
         let user = self
             .repo
-            .find_by_email(&email)
+            .find_by_email(email)
             .await?
             .ok_or(AuthError::UserNotFound)?;
 
-        // let password_state = user.password.as_deref().ok_or(AuthError::MissingPassword)?;
 
-        println!("{0}:{1:?}", user.verify_password(&password), password);
-
-        if !user.verify_password(&password) {
+        if !user.verify_password(password) {
             return Err(AuthError::PasswordDoesNotMatchError(
                 password.as_str().to_string(),
             ));
@@ -87,7 +68,7 @@ impl AuthUserServices {
     ) -> Result<Option<DirectUsersDetails>, AuthError> {
         let user = self
             .repo
-            .find_by_email(&email)
+            .find_by_email(email)
             .await?
             .ok_or(AuthError::UserNotFound)?;
 
@@ -103,7 +84,7 @@ impl AuthUserServices {
     }
 
     pub async fn delete_user(&self, user_id: &UserId) -> Result<bool, AuthError> {
-        let user_data = self.repo.delete_user(&user_id).await?;
+        let user_data = self.repo.delete_user(user_id).await?;
 
         if !user_data {
             return Err(AuthError::UserNotFound);

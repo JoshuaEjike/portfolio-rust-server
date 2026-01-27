@@ -1,11 +1,12 @@
-use axum::{
-    Json,
-    http::StatusCode,
-    response::{IntoResponse, Response},
-};
+// use axum::{
+//     Json,
+//     http::StatusCode,
+//     response::{IntoResponse, Response},
+// };
+
 use thiserror::Error;
 
-use crate::payload_description::ErrorResponse;
+// use crate::payload_description::ErrorResponse;
 
 #[derive(Debug, Error)]
 pub enum AuthError {
@@ -14,11 +15,11 @@ pub enum AuthError {
     #[error("User Not Found")]
     UserNotFound,
 
-    #[error("Forbidden: {0}")]
-    Forbidden(String),
+    // #[error("Forbidden: {0}")]
+    // Forbidden(String),
 
-    #[error("Forbidden: {0}")]
-    Internal(String),
+    // #[error("Forbidden: {0}")]
+    // Internal(String),
 
     #[error("{0} is not a valid email address")]
     EmailValidationError(String),
@@ -55,15 +56,15 @@ pub enum AuthError {
     #[error("password '{0}' does not match")]
     PasswordDoesNotMatchError(String),
 
-    #[error("password is missing")]
-    MissingPassword,
+    // #[error("password is missing")]
+    // MissingPassword,
 
-    #[error("missing authorization header")]
-    MissingAuthHeader,
-    #[error("invalid authorization scheme")]
-    InvalidScheme,
-    #[error("invalid token")]
-    InvalidToken,
+    // #[error("missing authorization header")]
+    // MissingAuthHeader,
+    // #[error("invalid authorization scheme")]
+    // InvalidScheme,
+    // #[error("invalid token")]
+    // InvalidToken,
     #[error("unauthorized")]
     Unauthorized,
     #[error("this is not a valid uuid or string")]

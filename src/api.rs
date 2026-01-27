@@ -2,17 +2,15 @@ pub mod user_api_routers;
 
 use axum::{
     Json, Router,
-    body::Body,
-    http::{Method, Request, StatusCode},
+    http::StatusCode,
     response::{IntoResponse, Response},
 };
 
 use tower::ServiceBuilder;
-use tower_http::trace::TraceLayer;
 
 use crate::{
     api::user_api_routers::user_api_router,
-    error::{handle_404, handle_404_with_path},
+    error::handle_404_with_path,
     payload_description::ErrorResponse,
     state::AppState,
 };

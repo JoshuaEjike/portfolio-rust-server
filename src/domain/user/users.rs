@@ -1,9 +1,9 @@
 use bcrypt::{DEFAULT_COST, hash, verify};
 use chrono::NaiveDateTime;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use uuid::Uuid;
 
-use crate::error::AuthError;
+use crate::{error::AuthError, payload_description::SignUpUserData};
 
 use super::{
     email::Email, name::Name, password::Password, phone_number::PhoneNumber, roles::Roles,
@@ -41,33 +41,23 @@ pub struct Users {
 
 impl Users {
     pub fn new(
-        name: Name,
-        email: Email,
-        phone_number: Option<PhoneNumber>,
-        roles: Roles,
-        password: Password,
-        created_by: Option<UserId>,
-        created_by_name: Option<Name>,
-        created_by_email: Option<Email>,
-        // edited_by: Option<UserId>,
-        // edited_by_name: Option<Name>,
-        // edited_by_email: Option<Email>,
+        data: SignUpUserData
     ) -> Result<Self, AuthError> {
         let hash_password =
-            hash(password.as_str(), DEFAULT_COST).map_err(|_| AuthError::HashError)?;
+            hash(data.password.as_str(), DEFAULT_COST).map_err(|_| AuthError::HashError)?;
 
         let created_at = chrono::Utc::now().naive_utc();
 
         let details = Self {
             id: UserId(Uuid::new_v4()),
-            name,
-            email,
-            phone_number,
-            roles,
+            name: data.name,
+            email: data.email,
+            phone_number: data.phone_number,
+            roles: data.roles,
             password: Some(hash_password),
-            created_by,
-            created_by_email,
-            created_by_name,
+            created_by: data.created_by,
+            created_by_email: data.created_by_email,
+            created_by_name: data.created_by_name,
             edited_by: None,
             edited_by_email: None,
             edited_by_name: None,

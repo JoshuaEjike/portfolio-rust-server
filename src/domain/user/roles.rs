@@ -4,26 +4,26 @@ use crate::error::AuthError;
 
 #[derive(Debug, Serialize, Clone)]
 pub enum Roles {
-    ROOT,
-    MID,
-    NORMAL,
+    Root,
+    Mid,
+    Normal,
 }
 
 impl Roles {
     pub fn new(value: &str) -> Result<Self, AuthError> {
         match value {
-            "root" => Ok(Self::ROOT),
-            "mid" => Ok(Self::MID),
-            "normal" => Ok(Self::NORMAL),
+            "root" => Ok(Self::Root),
+            "mid" => Ok(Self::Mid),
+            "normal" => Ok(Self::Normal),
             _ => Err(AuthError::AdminRolesError),
         }
     }
 
     pub fn as_str(&self) -> &str {
         match self {
-            Self::ROOT => "root",
-            Self::MID => "mid",
-            Self::NORMAL => "normal",
+            Self::Root => "root",
+            Self::Mid => "mid",
+            Self::Normal => "normal",
         }
     }
 }

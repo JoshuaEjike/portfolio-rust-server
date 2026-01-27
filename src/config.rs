@@ -6,9 +6,9 @@ pub struct Config {
     pub port: u16,
     pub jwt_expiry_seconds: u64,
     pub db_pool_max_connections: Option<u32>,
-    pub cloud_name: String,
-    pub cloud_api_key: String,
-    pub cloud_api_secret: String,
+    // pub cloud_name: String,
+    // pub cloud_api_key: String,
+    // pub cloud_api_secret: String,
 }
 
 impl Config {
@@ -30,9 +30,9 @@ impl Config {
                 s.parse::<u32>()
                     .expect("DB_POOL_MAX_CONNECTIONS must be a number")
             }),
-            cloud_name: env::var("CLOUD_NAME").expect("CLOUD_NAME must be set"),
-            cloud_api_key: env::var("CLOUD_API_KEY").expect("CLOUD_API_KEY must be set"),
-            cloud_api_secret: env::var("CLOUD_API_SECRET").expect("CLOUD_API_SECRET must be set"),
+            // cloud_name: env::var("CLOUD_NAME").expect("CLOUD_NAME must be set"),
+            // cloud_api_key: env::var("CLOUD_API_KEY").expect("CLOUD_API_KEY must be set"),
+            // cloud_api_secret: env::var("CLOUD_API_SECRET").expect("CLOUD_API_SECRET must be set"),
         }
     }
 }

@@ -22,14 +22,14 @@ pub fn error_manager(status: StatusCode, msg: impl Into<String>) -> Response<Bod
         .into_response()
 }
 
-pub async fn handle_404() -> impl IntoResponse {
-    println!("does not exist");
-    let body = ErrorResponse {
-        message: "route does not exist".to_string(),
-    };
+// pub async fn handle_404() -> impl IntoResponse {
+//     println!("does not exist");
+//     let body = ErrorResponse {
+//         message: "route does not exist".to_string(),
+//     };
 
-    (StatusCode::NOT_FOUND, Json(body)).into_response()
-}
+//     (StatusCode::NOT_FOUND, Json(body)).into_response()
+// }
 
 pub async fn handle_404_with_path(method: Method, uri: OriginalUri) -> impl IntoResponse {
     let body = ErrorResponse {

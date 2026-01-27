@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use sqlx::PgPool;
 
 use crate::{
-    domain::user::{DirectUsersDetails, Email, Name, Password, PhoneNumber, Roles, UserId, Users},
+    domain::user::{DirectUsersDetails, Email, Name, PhoneNumber, Roles, UserId, Users},
     error::AuthError,
     payload_description::UpdateUser,
     port::UserDBServices,
@@ -165,7 +165,7 @@ impl UserDBServices for PostgreUserRepository {
         .await
         .map_err(|e| AuthError::DatabaseError(e.to_string()))?;
 
-        let users = rows
+        rows
             .into_iter()
             .map(|user| {
                 Ok(DirectUsersDetails {
@@ -178,8 +178,6 @@ impl UserDBServices for PostgreUserRepository {
                     updated_at: user.updated_at,
                 })
             })
-            .collect();
-
-        users
+            .collect()
     }
 }

@@ -10,10 +10,7 @@ use crate::{
     error::error_manager,
     extract_or_early_return,
     payload_description::{
-        AuthSuccessResponse, ErrorResponse, RequestUserEmailPayload, RequestUserIdPayload,
-        ResponseForGettingSingleUsersPayload, SuccessMessageResponse, UpdateUser,
-        UpdateUserPayload, UserSigninPayload, UsersPayloadLoader,
-        gobal_response_description::ResponseForGettingUsersPayload,
+        AuthSuccessResponse, ErrorResponse, RequestUserEmailPayload, RequestUserIdPayload, ResponseForGettingSingleUsersPayload, SignUpUserData, SuccessMessageResponse, UpdateUser, UpdateUserPayload, UserSigninPayload, UsersPayloadLoader, gobal_response_description::ResponseForGettingUsersPayload
     },
     state::AppState,
     utils::CurrentUser,
@@ -70,17 +67,21 @@ pub async fn auth_user_sign_up_router(
     let roles = extract_or_early_return!(Roles::new(&roles_str));
     let password = extract_or_early_return!(Password::new(&password_str));
 
+    let user = SignUpUserData{
+        name,
+        email,
+        password,
+        phone_number: Some(phone_number),
+        roles,
+        created_by: Some(current_user.0.id),
+        created_by_name: Some(current_user.0.name),
+        created_by_email: Some(current_user.0.email),
+    };
+
     match state
         .auth_user_service
         .sign_up_user(
-            name,
-            email,
-            Some(phone_number),
-            roles,
-            password,
-            Some(current_user.0.id),
-            Some(current_user.0.name),
-            Some(current_user.0.email),
+            user,
         )
         .await
     {
@@ -93,7 +94,7 @@ pub async fn auth_user_sign_up_router(
             (StatusCode::CREATED, Json(success_response)).into_response()
         }
         Err(err) => {
-            return error_manager(StatusCode::BAD_REQUEST, err.to_string());
+            error_manager(StatusCode::BAD_REQUEST, err.to_string())
         }
     }
 }
@@ -123,7 +124,7 @@ pub async fn auth_user_sign_in_router(
             (StatusCode::CREATED, Json(success_response)).into_response()
         }
         Err(err) => {
-            return error_manager(StatusCode::BAD_REQUEST, err.to_string());
+            error_manager(StatusCode::BAD_REQUEST, err.to_string())
         }
     }
 }
@@ -157,7 +158,7 @@ pub async fn get_all_users_router(
             (StatusCode::OK, Json(success_response)).into_response()
         }
         Err(err) => {
-            return error_manager(StatusCode::BAD_REQUEST, err.to_string());
+             error_manager(StatusCode::BAD_REQUEST, err.to_string())
         }
     }
 }
@@ -198,7 +199,7 @@ pub async fn get_delete_user_router(
             (StatusCode::OK, Json(success_response)).into_response()
         }
         Err(err) => {
-            return error_manager(StatusCode::BAD_REQUEST, err.to_string());
+             error_manager(StatusCode::BAD_REQUEST, err.to_string())
         }
     }
 }
@@ -292,7 +293,7 @@ pub async fn get_update_user_router(
             (StatusCode::OK, Json(success_response)).into_response()
         }
         Err(err) => {
-            return error_manager(StatusCode::BAD_REQUEST, err.to_string());
+             error_manager(StatusCode::BAD_REQUEST, err.to_string())
         }
     }
 }
@@ -320,7 +321,7 @@ pub async fn get_single_user_router(
             (StatusCode::OK, Json(success_response)).into_response()
         }
         Err(err) => {
-            return error_manager(StatusCode::BAD_REQUEST, err.to_string());
+             error_manager(StatusCode::BAD_REQUEST, err.to_string())
         }
     }
 }

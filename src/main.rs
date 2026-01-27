@@ -62,7 +62,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let listener = TcpListener::bind(addr).await?;
 
-    println!("🚀 Server running at http://{}", addr);
+    println!("🚀 Server running at http://{addr}");
 
     axum::serve(listener, app).await?;
 

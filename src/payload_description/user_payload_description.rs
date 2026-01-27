@@ -25,6 +25,18 @@ pub struct UpdateUser {
     pub edited_by_email: String,
 }
 
+#[derive(Debug)]
+pub struct SignUpUserData {
+    pub name: Name,
+    pub email: Email,
+    pub password: Password,
+    pub phone_number: Option<PhoneNumber>,
+    pub roles: Roles,
+    pub created_by: Option<UserId>,
+    pub created_by_name: Option<Name>,
+    pub created_by_email: Option<Email>,
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct UsersPayloadLoader {
     pub name: Option<String>,
@@ -33,6 +45,7 @@ pub struct UsersPayloadLoader {
     pub roles: Option<String>,
     pub password: Option<String>,
 }
+
 
 #[derive(Debug, Deserialize)]
 pub struct UserSigninPayload {
