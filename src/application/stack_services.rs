@@ -31,6 +31,7 @@ impl StackServices {
         Ok("success".to_string())
     }
 
+    // this is to get all stack
     pub async fn get_all_stack(&self) -> Result<Vec<DirectStackDetails>, StackError> {
         let stack_data = self.repo.find_all_stack().await?;
 
