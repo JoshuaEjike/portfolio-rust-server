@@ -3,16 +3,15 @@ use chrono::NaiveDateTime;
 use serde::Serialize;
 use uuid::Uuid;
 
-use crate::{error::AuthError, payload_description::SignUpUserData};
+use crate::{domain::uuid_lib::Id, error::AuthError, payload_description::SignUpUserData};
 
 use super::{
     email::Email, name::Name, password::Password, phone_number::PhoneNumber, roles::Roles,
-    uuid_lib::UserId,
 };
 
 #[derive(Debug, Serialize, Clone)]
 pub struct DirectUsersDetails {
-    pub id: UserId,
+    pub id: Id,
     pub name: Name,
     pub email: Email,
     pub phone_number: Option<PhoneNumber>,
@@ -23,16 +22,16 @@ pub struct DirectUsersDetails {
 
 #[derive(Debug, Clone)]
 pub struct Users {
-    pub id: UserId,
+    pub id: Id,
     pub name: Name,
     pub email: Email,
     pub phone_number: Option<PhoneNumber>,
     pub password: Option<String>,
     pub roles: Roles,
-    pub created_by: Option<UserId>,
+    pub created_by: Option<Id>,
     pub created_by_name: Option<Name>,
     pub created_by_email: Option<Email>,
-    pub edited_by: Option<UserId>,
+    pub edited_by: Option<Id>,
     pub edited_by_name: Option<Name>,
     pub edited_by_email: Option<Email>,
     pub created_at: NaiveDateTime,
@@ -47,7 +46,7 @@ impl Users {
         let created_at = chrono::Utc::now().naive_utc();
 
         let details = Self {
-            id: UserId(Uuid::new_v4()),
+            id: Id(Uuid::new_v4()),
             name: data.name,
             email: data.email,
             phone_number: data.phone_number,

@@ -2,15 +2,15 @@ use serde::Serialize;
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Clone)]
-pub struct UserId(pub Uuid);
+pub struct Id(pub Uuid);
 
-impl UserId {
+impl Id {
     pub fn as_uuid(&self) -> Uuid {
         self.0
     }
 
     pub fn from_str(input: &str) -> Result<Self, uuid::Error> {
-        Uuid::parse_str(input).map(UserId)
+        Uuid::parse_str(input).map(Id)
     }
 
     // pub fn uuid_from_str(input: &str) -> Result<Uuid, uuid::Error> {

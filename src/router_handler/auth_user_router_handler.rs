@@ -6,7 +6,10 @@ use axum::{
 };
 
 use crate::{
-    domain::user::{Email, Name, Password, PhoneNumber, Roles, UserId},
+    domain::{
+        user::{Email, Name, Password, PhoneNumber, Roles},
+        uuid_lib::Id,
+    },
     error::error_manager,
     extract_or_early_return,
     payload_description::{
@@ -173,7 +176,7 @@ pub async fn get_delete_user_router(
         }
     };
 
-    let user_id = match UserId::from_str(&path.id) {
+    let user_id = match Id::from_str(&path.id) {
         Ok(data) => data,
         Err(err) => {
             return error_manager(StatusCode::BAD_REQUEST, err.to_string());
@@ -213,7 +216,7 @@ pub async fn get_update_user_router(
         }
     };
 
-    let user_id = match UserId::from_str(&path.id) {
+    let user_id = match Id::from_str(&path.id) {
         Ok(data) => data,
         Err(err) => {
             return error_manager(StatusCode::BAD_REQUEST, err.to_string());
@@ -260,7 +263,7 @@ pub async fn get_update_user_router(
         .as_deref()
         .and_then(|n| Roles::new(n).ok());
 
-    let updated_product = UpdateUser {
+    let updated_user = UpdateUser {
         id: user_id.clone(),
         name,
         email,
@@ -272,7 +275,7 @@ pub async fn get_update_user_router(
         edited_by_email: user.0.name.as_str().to_string(),
     };
 
-    match state.auth_user_service.update_user(updated_product).await {
+    match state.auth_user_service.update_user(updated_user).await {
         Ok(_users_data) => {
             let success_response = SuccessMessageResponse {
                 message: "success".to_string(),

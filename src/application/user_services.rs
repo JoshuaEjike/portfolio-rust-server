@@ -1,7 +1,10 @@
 use std::sync::Arc;
 
 use crate::{
-    domain::user::{DirectUsersDetails, Email, Password, UserId, Users},
+    domain::{
+        user::{DirectUsersDetails, Email, Password, Users},
+        uuid_lib::Id,
+    },
     error::AuthError,
     payload_description::{SignUpUserData, UpdateUser},
     port::{UserDBServices, jwt::JwtService},
@@ -79,7 +82,7 @@ impl AuthUserServices {
         }))
     }
 
-    pub async fn delete_user(&self, user_id: &UserId) -> Result<bool, AuthError> {
+    pub async fn delete_user(&self, user_id: &Id) -> Result<bool, AuthError> {
         let user_data = self.repo.delete_user(user_id).await?;
 
         if !user_data {

@@ -19,10 +19,10 @@ use sqlx::postgres::PgPoolOptions;
 use tokio::net::TcpListener;
 
 use crate::{
-    adapter::{JwtServiceImpl, PostgreUserRepository},
+    adapter::{JwtServiceImpl, PostgreStackRepository, PostgreUserRepository},
     api::app_apis,
-    application::AuthUserServices,
-    port::UserDBServices,
+    application::{AuthUserServices, StackServices},
+    port::{StackDBServices, UserDBServices},
     state::AppState,
 };
 
@@ -43,13 +43,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         config.jwt_expiry_seconds,
     ));
 
+    let stack_repo = Arc::new(PostgreStackRepository::new(pool.clone()))
+        as Arc<dyn StackDBServices + Send + Sync>;
+
     let auth_user_service = Arc::new(AuthUserServices::new(
         user_repo.clone(),
         jwt_services.clone(),
     ));
 
+    let stack_services = Arc::new(StackServices::new(stack_repo));
+
     let app_state = AppState {
         auth_user_service,
+        stack_services,
         jwt_services,
         user_repo,
     };

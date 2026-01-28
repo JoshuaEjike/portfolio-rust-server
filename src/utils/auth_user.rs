@@ -1,5 +1,5 @@
 use crate::{
-    domain::user::{UserId, Users},
+    domain::{user::Users, uuid_lib::Id},
     error::AuthError,
     port::{UserDBServices, jwt::JwtService},
 };
@@ -29,8 +29,8 @@ impl CurrentUser {
         // ✅ Verify token → get user_id as String
         let user_id_str = jwt_service.verify(token).ok_or(AuthError::Unauthorized)?; // Option<String> → String
 
-        // ✅ Convert into UserId (your domain type)
-        let user_id = UserId::from_str(&user_id_str).map_err(AuthError::InvalidString)?;
+        // ✅ Convert into Id (your domain type)
+        let user_id = Id::from_str(&user_id_str).map_err(AuthError::InvalidString)?;
         // ^ make sure you have a constructor for this (e.g. new(String))
 
         // ✅ Look up user in database

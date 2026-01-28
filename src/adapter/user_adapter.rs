@@ -2,7 +2,10 @@ use async_trait::async_trait;
 use sqlx::PgPool;
 
 use crate::{
-    domain::user::{DirectUsersDetails, Email, Name, PhoneNumber, Roles, UserId, Users},
+    domain::{
+        user::{DirectUsersDetails, Email, Name, PhoneNumber, Roles, Users},
+        uuid_lib::Id,
+    },
     error::AuthError,
     payload_description::UpdateUser,
     port::UserDBServices,
@@ -64,7 +67,7 @@ impl UserDBServices for PostgreUserRepository {
         Ok(row
             .map(|d| {
                 Ok(Users {
-                    id: UserId(d.id),
+                    id: Id(d.id),
                     email: Email(d.email),
                     name: Name(d.name),
                     phone_number: d.phone_number.map(PhoneNumber),
@@ -83,7 +86,7 @@ impl UserDBServices for PostgreUserRepository {
             .transpose()?)
     }
 
-    async fn find_by_id(&self, user_id: &UserId) -> Result<Option<Users>, AuthError> {
+    async fn find_by_id(&self, user_id: &Id) -> Result<Option<Users>, AuthError> {
         let row = sqlx::query!(
             r#"SELECT id, email, name, phone_number, roles, password, created_at, updated_at FROM users WHERE id=$1"#,
             user_id.as_uuid(),
@@ -95,7 +98,7 @@ impl UserDBServices for PostgreUserRepository {
         Ok(row
             .map(|d| {
                 Ok(Users {
-                    id: UserId(d.id),
+                    id: Id(d.id),
                     email: Email(d.email),
                     name: Name(d.name),
                     phone_number: d.phone_number.map(PhoneNumber),
@@ -114,7 +117,7 @@ impl UserDBServices for PostgreUserRepository {
             .transpose()?)
     }
 
-    async fn delete_user(&self, user_id: &UserId) -> Result<bool, AuthError> {
+    async fn delete_user(&self, user_id: &Id) -> Result<bool, AuthError> {
         let result = sqlx::query!("DELETE FROM users where id = $1", user_id.as_uuid())
             .execute(&self.pool)
             .await
@@ -168,7 +171,7 @@ impl UserDBServices for PostgreUserRepository {
         rows.into_iter()
             .map(|user| {
                 Ok(DirectUsersDetails {
-                    id: UserId(user.id),
+                    id: Id(user.id),
                     email: Email(user.email),
                     name: Name(user.name),
                     roles: Roles::new(&user.roles)?,
