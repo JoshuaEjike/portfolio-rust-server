@@ -2,17 +2,17 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::Serialize;
 
-use crate::error::AuthError;
+use crate::error::api_error::ApiErrors;
 
 #[derive(Debug, Serialize, Clone)]
 pub struct Email(pub String);
 
 impl Email {
-    pub fn new(value: &str) -> Result<Self, AuthError> {
+    pub fn new(value: &str) -> Result<Self, ApiErrors> {
         if email_regex().is_match(value) {
             Ok(Self(value.to_owned()))
         } else {
-            Err(AuthError::EmailValidationError(value.to_string()))
+            Err(ApiErrors::EmailValidation(value.to_string()))
         }
     }
 

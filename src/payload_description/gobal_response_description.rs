@@ -22,7 +22,7 @@ pub struct ResponseForGettingUsersPayload {
 #[derive(Debug, Serialize, Clone)]
 pub struct ResponseForGettingSingleUsersPayload {
     pub message: String,
-    pub users: Option<DirectUsersDetails>,
+    pub user: Option<DirectUsersDetails>,
 }
 
 #[derive(Debug, Serialize, Clone)]

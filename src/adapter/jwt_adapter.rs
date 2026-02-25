@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::port::jwt::JwtService;
 
+use jsonwebtoken::{DecodingKey, Validation, decode};
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct Claims {
     sub: String,
@@ -52,8 +54,6 @@ impl JwtService for JwtServiceImpl {
         // )
         // .map(|data| data.claims.sub)
         // .ok()
-
-        use jsonwebtoken::{DecodingKey, Validation, decode};
 
         match decode::<Claims>(
             token,

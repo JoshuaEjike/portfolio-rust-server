@@ -2,17 +2,19 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::Serialize;
 
-use crate::error::AuthError;
+use crate::error::api_error::ApiErrors;
 
 #[derive(Debug, Serialize, Clone)]
-pub struct Name(pub String);
+pub struct Text(pub String);
 
-impl Name {
-    pub fn new(value: &str) -> Result<Self, AuthError> {
+impl Text {
+    pub fn new(value: &str) -> Result<Self, ApiErrors> {
         if name_regex().is_match(value) {
             Ok(Self(value.to_string()))
         } else {
-            Err(AuthError::NameMustBeAlphabetic)
+            Err(ApiErrors::TextValidation(
+                "character must be alphabetic".to_string(),
+            ))
         }
     }
 

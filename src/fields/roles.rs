@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::error::AuthError;
+use crate::error::api_error::ApiErrors;
 
 #[derive(Debug, Serialize, Clone)]
 pub enum Roles {
@@ -10,12 +10,14 @@ pub enum Roles {
 }
 
 impl Roles {
-    pub fn new(value: &str) -> Result<Self, AuthError> {
+    pub fn new(value: &str) -> Result<Self, ApiErrors> {
         match value {
             "root" => Ok(Self::Root),
             "mid" => Ok(Self::Mid),
             "normal" => Ok(Self::Normal),
-            _ => Err(AuthError::AdminRolesError),
+            _ => Err(ApiErrors::BadRequest(
+                "admin roles accepted are root, mid, normal.".to_string(),
+            )),
         }
     }
 

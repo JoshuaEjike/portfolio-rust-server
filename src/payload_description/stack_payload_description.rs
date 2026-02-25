@@ -1,10 +1,9 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::domain::{
-    stack::DirectStackDetails,
-    user::{Email, Name},
-    uuid_lib::Id,
+use crate::{
+    domain::stack::DirectStackDetails,
+    fields::{Email, Text},
 };
 
 #[derive(Debug, Deserialize)]
@@ -15,7 +14,7 @@ pub struct UpdateStackPayload {
 
 #[derive(Debug)]
 pub struct UpdateStack {
-    pub id: Id,
+    pub id: Uuid,
     pub title: Option<String>,
     pub slug: Option<String>,
     pub edited_by: Uuid,
@@ -25,23 +24,22 @@ pub struct UpdateStack {
 
 #[derive(Debug)]
 pub struct CreateStackData {
-    pub title: String,
-    pub slug: String,
-    pub created_by: Option<Id>,
-    pub created_by_name: Option<Name>,
-    pub created_by_email: Option<Email>,
+    pub title: Text,
+    pub slug: Text,
+    pub created_by: Uuid,
+    pub created_by_name: Text,
+    pub created_by_email: Email,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct StackPayloadLoader {
-    pub title: Option<String>,
-    pub slug: Option<String>,
+pub struct ValidatedCreateStackData {
+    pub title: String,
+    pub slug: String,
 }
 
 #[derive(Debug, Serialize, Clone)]
 pub struct ResponseForGettingAllStack {
     pub message: String,
-    pub stack: Vec<DirectStackDetails>,
+    pub stacks: Vec<DirectStackDetails>,
 }
 
 #[derive(Debug, Serialize, Clone)]

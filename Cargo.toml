@@ -17,6 +17,7 @@ bcrypt = "0.18.0"
 async-trait = "0.1.88"
 dotenv = "0.15.0"
 axum = {version = "0.8.4", features = ["macros", "multipart"]}
+axum-extra = { version = "0.12.5", features = ["typed-header"] }
 tokio = { version = "1.46.1", features = ["full"] }
 sqlx-cli = "0.8.6"
 time = "0.3.41"

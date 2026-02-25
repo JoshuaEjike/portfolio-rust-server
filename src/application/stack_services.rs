@@ -1,11 +1,10 @@
 use std::sync::Arc;
 
+use uuid::Uuid;
+
 use crate::{
-    domain::{
-        stack::{DirectStackDetails, Stack},
-        uuid_lib::Id,
-    },
-    error::stack_error::StackError,
+    domain::stack::{DirectStackDetails, Stack},
+    error::api_error::ApiErrors,
     payload_description::{CreateStackData, UpdateStack},
     port::StackDBServices,
 };
@@ -19,20 +18,25 @@ impl StackServices {
         Self { repo }
     }
 
-    pub async fn create_stacks(&self, data: CreateStackData) -> Result<String, StackError> {
-        if self.repo.find_by_title(&data.title).await?.is_some() {
-            return Err(StackError::StackExists);
+    pub async fn create_stacks(&self, data: CreateStackData) -> Result<String, ApiErrors> {
+        if self
+            .repo
+            .find_by_title(data.title.as_str())
+            .await?
+            .is_some()
+        {
+            return Err(ApiErrors::NotFound("stack does not exist".to_string()));
         }
 
         let stack = Stack::new(data)?;
 
-        self.repo.create_stack(&stack).await?;
+        let id = self.repo.create_stack(&stack).await?;
 
-        Ok("success".to_string())
+        Ok(id.into())
     }
 
     // this is to get all stack
-    pub async fn get_all_stack(&self) -> Result<Vec<DirectStackDetails>, StackError> {
+    pub async fn get_all_stack(&self) -> Result<Vec<DirectStackDetails>, ApiErrors> {
         let stack_data = self.repo.find_all_stack().await?;
 
         Ok(stack_data)
@@ -40,13 +44,13 @@ impl StackServices {
 
     pub async fn find_single_stack(
         &self,
-        stack_id: &Id,
-    ) -> Result<Option<DirectStackDetails>, StackError> {
+        stack_id: &Uuid,
+    ) -> Result<Option<DirectStackDetails>, ApiErrors> {
         let user = self
             .repo
             .find_by_id(stack_id)
             .await?
-            .ok_or(StackError::StackNotFound)?;
+            .ok_or(ApiErrors::NotFound("Stack not found".to_string()))?;
 
         Ok(Some(DirectStackDetails {
             id: user.id,
@@ -57,25 +61,25 @@ impl StackServices {
         }))
     }
 
-    pub async fn delete_stack(&self, stack_id: &Id) -> Result<bool, StackError> {
+    pub async fn delete_stack(&self, stack_id: &Uuid) -> Result<bool, ApiErrors> {
         let stack_data = self.repo.delete_stack(stack_id).await?;
 
         if !stack_data {
-            return Err(StackError::StackNotFound);
+            return Err(ApiErrors::NotFound("Stack not found".to_string()));
         }
 
         Ok(true)
     }
 
-    pub async fn update_stack(&self, stack: UpdateStack) -> Result<bool, StackError> {
+    pub async fn update_stack(&self, stack: UpdateStack) -> Result<bool, ApiErrors> {
         if self.repo.find_by_id(&stack.id).await?.is_none() {
-            return Err(StackError::StackNotFound);
+            return Err(ApiErrors::NotFound("Stack not found".to_string()));
         }
 
         let user_data = self.repo.update_stack(stack).await?;
 
         if !user_data {
-            return Err(StackError::StackNotFound);
+            return Err(ApiErrors::NotFound("Stack not found".to_string()));
         }
 
         Ok(true)

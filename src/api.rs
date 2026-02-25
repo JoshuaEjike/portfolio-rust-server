@@ -2,7 +2,7 @@ pub mod stack_api_routers;
 pub mod user_api_routers;
 
 use axum::{
-    Json, Router,
+     Router,
     http::StatusCode,
     response::{IntoResponse, Response},
 };
@@ -11,8 +11,7 @@ use tower::ServiceBuilder;
 
 use crate::{
     api::{stack_api_routers::stack_api_router, user_api_routers::user_api_router},
-    error::handle_404_with_path,
-    payload_description::ErrorResponse,
+    error::{api_error::ApiErrors, handle_404_with_path},
     state::AppState,
 };
 
@@ -29,11 +28,8 @@ pub fn app_apis(state: AppState) -> Router {
             ServiceBuilder::new()
                 .map_response(|res: Response| {
                     if res.status() == StatusCode::METHOD_NOT_ALLOWED {
-                        // Replace the default 405 response
-                        let body = ErrorResponse {
-                            message: "Method not allowed for this route".to_string(),
-                        };
-                        (StatusCode::METHOD_NOT_ALLOWED, Json(body)).into_response()
+                        ApiErrors::MethodNotAllowed("Method not allowed for this route".to_string())
+                            .into_response()
                     } else {
                         res
                     }

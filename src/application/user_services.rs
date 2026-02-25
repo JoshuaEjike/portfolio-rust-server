@@ -1,12 +1,15 @@
 use std::sync::Arc;
 
+use uuid::Uuid;
+
 use crate::{
-    domain::{
-        user::{DirectUsersDetails, Email, Password, Users},
-        uuid_lib::Id,
+    core::password_core::{hashing_password, verify_password},
+    domain::user::{DirectUsersDetails, Users},
+    error::api_error::ApiErrors,
+    fields::{Email, Password},
+    payload_description::{
+        SignUpUserData, UpdateUser, user_payload_description::UpdateUserDetails,
     },
-    error::AuthError,
-    payload_description::{SignUpUserData, UpdateUser},
     port::{UserDBServices, jwt::JwtService},
 };
 
@@ -23,39 +26,37 @@ impl AuthUserServices {
         Self { repo, jwt }
     }
 
-    pub async fn sign_up_user(&self, data: SignUpUserData) -> Result<String, AuthError> {
+    pub async fn sign_up_user(&self, data: SignUpUserData) -> Result<String, ApiErrors> {
         if self.repo.find_by_email(&data.email).await?.is_some() {
-            return Err(AuthError::UserExists);
+            return Err(ApiErrors::NotFound("user does not exist".to_string()));
         }
 
         let user = Users::new(data)?;
 
         self.repo.create_user(&user).await?;
 
-        Ok(self.jwt.generate(&user.id.as_uuid().to_string()))
+        Ok(self.jwt.generate(&user.id.to_string()))
     }
 
     pub async fn sign_in_user(
         &self,
         email: &Email,
         password: &Password,
-    ) -> Result<String, AuthError> {
+    ) -> Result<String, ApiErrors> {
         let user = self
             .repo
             .find_by_email(email)
             .await?
-            .ok_or(AuthError::UserNotFound)?;
+            .ok_or(ApiErrors::NotFound("User not found".to_string()))?;
 
-        if !user.verify_password(password) {
-            return Err(AuthError::PasswordDoesNotMatchError(
-                password.as_str().to_string(),
-            ));
+        if !verify_password(user.password, password.as_str().to_string()) {
+            return Err(ApiErrors::PasswordFail(password.as_str().to_string()));
         }
 
-        Ok(self.jwt.generate(&user.id.as_uuid().to_string()))
+        Ok(self.jwt.generate(&user.id.to_string()))
     }
 
-    pub async fn find_all_users(&self) -> Result<Vec<DirectUsersDetails>, AuthError> {
+    pub async fn find_all_users(&self) -> Result<Vec<DirectUsersDetails>, ApiErrors> {
         let user_data = self.repo.find_all_users().await?;
 
         Ok(user_data)
@@ -64,12 +65,12 @@ impl AuthUserServices {
     pub async fn find_single_user(
         &self,
         email: &Email,
-    ) -> Result<Option<DirectUsersDetails>, AuthError> {
+    ) -> Result<Option<DirectUsersDetails>, ApiErrors> {
         let user = self
             .repo
             .find_by_email(email)
             .await?
-            .ok_or(AuthError::UserNotFound)?;
+            .ok_or(ApiErrors::NotFound("User not found".to_string()))?;
 
         Ok(Some(DirectUsersDetails {
             id: user.id,
@@ -82,25 +83,42 @@ impl AuthUserServices {
         }))
     }
 
-    pub async fn delete_user(&self, user_id: &Id) -> Result<bool, AuthError> {
+    pub async fn delete_user(&self, user_id: &Uuid) -> Result<bool, ApiErrors> {
         let user_data = self.repo.delete_user(user_id).await?;
 
         if !user_data {
-            return Err(AuthError::UserNotFound);
+            return Err(ApiErrors::NotFound("User not found".to_string()));
         }
 
         Ok(true)
     }
 
-    pub async fn update_user(&self, users: UpdateUser) -> Result<bool, AuthError> {
+    pub async fn update_user(&self, users: UpdateUser) -> Result<bool, ApiErrors> {
         if self.repo.find_by_id(&users.id).await?.is_none() {
-            return Err(AuthError::UserNotFound);
+            return Err(ApiErrors::NotFound("User not found".to_string()));
         }
 
-        let user_data = self.repo.update_user(users).await?;
+        let hashed_password = if let Some(password) = users.password {
+            Some(hashing_password(password.as_str().to_string())?)
+        } else {
+            None
+        };
+
+        let details = UpdateUserDetails {
+            id: users.id,
+            name: users.name,
+            phone_number: users.phone_number,
+            password: hashed_password,
+            roles: users.roles,
+            edited_by: users.edited_by,
+            edited_by_name: users.edited_by_name,
+            edited_by_email: users.edited_by_email,
+        };
+
+        let user_data = self.repo.update_user(details).await?;
 
         if !user_data {
-            return Err(AuthError::UserNotFound);
+            return Err(ApiErrors::NotFound("User not found".to_string()));
         }
 
         Ok(true)
