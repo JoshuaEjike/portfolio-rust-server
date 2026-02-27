@@ -22,10 +22,22 @@ use sqlx::postgres::PgPoolOptions;
 use tokio::net::TcpListener;
 
 use crate::{
-    adapter::{JwtServiceImpl, PostgreStackRepository, PostgreUserRepository},
+    adapter::{
+        JwtServiceImpl, PostgreStackRepository, PostgreUserRepository,
+        blog_adapter::PostgreBlogRepository, cloudinary::CloudinaryUploader,
+        project_adapter::PostgreProjectRepository,
+        refresh_token_adapter::PostgreRefreshTokenRepository,
+    },
     api::app_apis,
-    application::{AuthUserServices, StackServices},
-    port::{StackDBServices, UserDBServices},
+    application::{
+        AuthUserServices, StackServices, blog_services::BlogServices,
+        image_upload_services::ImageUploadService, project_services::ProjectServices,
+        refresh_token_services::RefreshTokenServices,
+    },
+    port::{
+        StackDBServices, UserDBServices, blog_db::BlogDBServices, project_db::ProjectDBServices,
+        refresh_token_db::RefreshTokenDBServices,
+    },
     state::AppState,
 };
 
@@ -38,16 +50,31 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .connect(&config.database_url)
         .await?;
 
+    let uploader = Arc::new(CloudinaryUploader::new(
+        config.cloud_name,
+        config.cloud_api_key,
+        config.cloud_api_secret,
+    ));
+
     let user_repo =
         Arc::new(PostgreUserRepository::new(pool.clone())) as Arc<dyn UserDBServices + Send + Sync>;
 
     let jwt_services = Arc::new(JwtServiceImpl::new(
-        config.jwt_secret,
+        config.jwt_secret.clone(),
         config.jwt_expiry_seconds,
     ));
 
     let stack_repo = Arc::new(PostgreStackRepository::new(pool.clone()))
         as Arc<dyn StackDBServices + Send + Sync>;
+
+    let blog_repo =
+        Arc::new(PostgreBlogRepository::new(pool.clone())) as Arc<dyn BlogDBServices + Send + Sync>;
+
+    let project_repo = Arc::new(PostgreProjectRepository::new(pool.clone()))
+        as Arc<dyn ProjectDBServices + Send + Sync>;
+
+    let refresh_token_repo = Arc::new(PostgreRefreshTokenRepository::new(pool.clone()))
+        as Arc<dyn RefreshTokenDBServices + Send + Sync>;
 
     let auth_user_service = Arc::new(AuthUserServices::new(
         user_repo.clone(),
@@ -56,10 +83,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let stack_services = Arc::new(StackServices::new(stack_repo));
 
+    let blog_services = Arc::new(BlogServices::new(blog_repo));
+
+    let project_services = Arc::new(ProjectServices::new(project_repo));
+
+    let image_service = Arc::new(ImageUploadService::new(uploader.clone()));
+
+    let refresh_token_service = Arc::new(RefreshTokenServices::new(
+        refresh_token_repo.clone(),
+        config.jwt_secret.clone(),
+        config.jwt_expiry_seconds,
+    ));
+
     let app_state = AppState {
         auth_user_service,
         stack_services,
+        blog_services,
+        project_services,
         jwt_services,
+        image_service,
+        refresh_token_service,
         user_repo,
     };
 

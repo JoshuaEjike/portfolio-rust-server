@@ -6,39 +6,48 @@ use uuid::Uuid;
 
 use crate::{
     error::api_error::ApiErrors,
-    extractor::auth_extractor::AuthUser,
+    extractor::{
+        auth_extractor::AuthUser,
+        project_extractor::{ProjectCreateInput, ProjectUpateInput},
+    },
     fields::Text,
     payload_description::{
-        CreateStackData, RequestUserIdPayload, ResponseForGettingAllStack,
-        ResponseForGettingSingleStack, SuccessMessageResponse, UpdateStack, UpdateStackPayload,
+        RequestUserIdPayload, SuccessMessageResponse,
+        project_payload_description::{
+            CreateProjectData, ResponseForGettingAllProject, ResponseForGettingSingleProject,
+            UpdateProject,
+        },
     },
-    payload_handler::stack_payload_handler::StackCreateRequest,
     state::AppState,
 };
 
 #[axum::debug_handler]
-pub async fn create_stack_router(
+pub async fn create_project_router(
     AuthUser {
         id, email, name, ..
     }: AuthUser,
     State(state): State<AppState>,
-    Json(payload): Json<StackCreateRequest>,
+    payload: ProjectCreateInput,
 ) -> Result<Json<serde_json::Value>, ApiErrors> {
-    let payload_data = payload.validate()?;
+    let title = Text::new(&payload.title)?;
 
-    let title = Text::new(&payload_data.title)?;
+    let description = Text::new(&payload.description)?;
 
-    let slug = Text::new(&payload_data.slug)?;
+    let stack = Text::new(&payload.stack)?;
 
-    let stack = CreateStackData {
+    let project = CreateProjectData {
         title,
-        slug,
+        description,
+        stack,
+        content: payload.content,
+        image: payload.image,
+        image_id: payload.image_id,
         created_by: id,
         created_by_name: name,
         created_by_email: email,
     };
 
-    let result = state.stack_services.create_stacks(stack).await?;
+    let result = state.project_services.create_project(project).await?;
 
     let success_response = SuccessMessageResponse {
         message: format!("Stack created: {result}"),
@@ -48,45 +57,45 @@ pub async fn create_stack_router(
 }
 
 #[axum::debug_handler]
-pub async fn get_all_stack_router(
+pub async fn get_all_project_router(
     State(state): State<AppState>,
 ) -> Result<Json<serde_json::Value>, ApiErrors> {
-    let stacks = state.stack_services.get_all_stack().await?;
+    let projects = state.project_services.get_all_project().await?;
 
-    let success_response = ResponseForGettingAllStack {
+    let success_response = ResponseForGettingAllProject {
         message: "success".to_string(),
-        stacks,
+        projects,
     };
 
     Ok(Json(serde_json::json!(success_response)))
 }
 
 #[axum::debug_handler]
-pub async fn get_single_stack_router(
+pub async fn get_single_project_router(
     State(state): State<AppState>,
     Path(path): Path<RequestUserIdPayload>,
 ) -> Result<Json<serde_json::Value>, ApiErrors> {
     let id = Uuid::parse_str(&path.id).map_err(|e| ApiErrors::InvalidString(e.to_string()))?;
 
-    let stack = state.stack_services.find_single_stack(&id).await?;
+    let project = state.project_services.find_single_project(&id).await?;
 
-    let success_response = ResponseForGettingSingleStack {
+    let success_response = ResponseForGettingSingleProject {
         message: "success".to_string(),
-        stack,
+        project,
     };
 
     Ok(Json(serde_json::json!(success_response)))
 }
 
 #[axum::debug_handler]
-pub async fn get_delete_stack_router(
+pub async fn get_delete_project_router(
     _: AuthUser,
     State(state): State<AppState>,
     Path(path): Path<RequestUserIdPayload>,
 ) -> Result<Json<serde_json::Value>, ApiErrors> {
     let id = Uuid::parse_str(&path.id).map_err(|e| ApiErrors::InvalidString(e.to_string()))?;
 
-    state.stack_services.delete_stack(&id).await?;
+    state.project_services.delete_project(&id).await?;
 
     let success_response = SuccessMessageResponse {
         message: "success".to_string(),
@@ -96,26 +105,33 @@ pub async fn get_delete_stack_router(
 }
 
 #[axum::debug_handler]
-pub async fn get_update_stack_router(
+pub async fn get_update_project_router(
     AuthUser {
         id, email, name, ..
     }: AuthUser,
     State(state): State<AppState>,
     Path(path): Path<RequestUserIdPayload>,
-    Json(payload_data): Json<UpdateStackPayload>,
+    payload: ProjectUpateInput,
 ) -> Result<Json<serde_json::Value>, ApiErrors> {
-    let user_id = Uuid::parse_str(&path.id).map_err(|e| ApiErrors::InvalidString(e.to_string()))?;
+    let project_id =
+        Uuid::parse_str(&path.id).map_err(|e| ApiErrors::InvalidString(e.to_string()))?;
 
-    let updated_stack = UpdateStack {
-        id: user_id,
-        title: payload_data.title,
-        slug: payload_data.slug,
+    let updated_project = UpdateProject {
+        project_id,
+        description: payload.description,
+        stack: payload.stack,
+        content: payload.content,
+        image: payload.image,
+        image_id: payload.image_id,
         edited_by: id,
-        edited_by_name: email.as_str().to_string(),
-        edited_by_email: name.as_str().to_string(),
+        edited_by_name: name.as_str().to_string(),
+        edited_by_email: email.as_str().to_string(),
     };
 
-    state.stack_services.update_stack(updated_stack).await?;
+    state
+        .project_services
+        .update_project(updated_project)
+        .await?;
 
     let success_response = SuccessMessageResponse {
         message: "success".to_string(),

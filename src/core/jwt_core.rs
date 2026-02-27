@@ -1,12 +1,38 @@
+use jsonwebtoken::{EncodingKey, Header, encode};
 use std::sync::Arc;
 
+use chrono::{Duration, Utc};
 use uuid::Uuid;
 
 use crate::{
+    adapter::jwt_adapter::Claims,
     domain::user::DirectUsersDetails,
     error::api_error::ApiErrors,
     port::{UserDBServices, jwt::JwtService},
 };
+
+pub fn generate_token(
+    user_id: Uuid,
+    jwt_secret: &str,
+    expiry_second: u64,
+) -> Result<String, ApiErrors> {
+    let expiration = Utc::now()
+        .checked_add_signed(Duration::seconds(expiry_second as i64))
+        .expect("valid timespame")
+        .timestamp();
+
+    let claims = Claims {
+        sub: user_id.to_string(),
+        exp: expiration as usize,
+    };
+
+    encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(jwt_secret.as_bytes()),
+    )
+    .map_err(|_| ApiErrors::InternalServerError("Token generation failed".to_string()))
+}
 
 pub async fn validate_user_token(
     token: &str,
@@ -28,6 +54,6 @@ pub async fn validate_user_token(
     Ok(user)
 }
 
-// pub fn generate_refresh_token() -> String {
-//     Uuid::new_v4().to_string()
-// }
+pub fn generate_refresh_token() -> String {
+    Uuid::new_v4().to_string()
+}

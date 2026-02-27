@@ -61,6 +61,25 @@ impl StackServices {
         }))
     }
 
+    pub async fn find_single_stack_by_title(
+        &self,
+        title: String,
+    ) -> Result<Option<DirectStackDetails>, ApiErrors> {
+        let user = self
+            .repo
+            .find_by_title(&title)
+            .await?
+            .ok_or(ApiErrors::NotFound("Stack not found".to_string()))?;
+
+        Ok(Some(DirectStackDetails {
+            id: user.id,
+            title: user.title,
+            slug: user.slug,
+            created_at: user.created_at,
+            updated_at: user.updated_at,
+        }))
+    }
+
     pub async fn delete_stack(&self, stack_id: &Uuid) -> Result<bool, ApiErrors> {
         let stack_data = self.repo.delete_stack(stack_id).await?;
 

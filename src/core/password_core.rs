@@ -10,7 +10,5 @@ pub fn hashing_password(password: String) -> Result<String, ApiErrors> {
 }
 
 pub fn verify_password(hash: String, password: String) -> bool {
-    let result = verify(password.as_str(), hash.as_str()).unwrap_or(false);
-
-    result
+    verify(password.as_str(), hash.as_str()).unwrap_or(false)
 }

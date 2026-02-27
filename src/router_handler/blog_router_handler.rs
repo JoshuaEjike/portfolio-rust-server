@@ -6,39 +6,44 @@ use uuid::Uuid;
 
 use crate::{
     error::api_error::ApiErrors,
-    extractor::auth_extractor::AuthUser,
+    extractor::{
+        auth_extractor::AuthUser,
+        blog_extractor::{BlogCreateInput, BlogUpateInput},
+    },
     fields::Text,
     payload_description::{
-        CreateStackData, RequestUserIdPayload, ResponseForGettingAllStack,
-        ResponseForGettingSingleStack, SuccessMessageResponse, UpdateStack, UpdateStackPayload,
+        RequestUserIdPayload, SuccessMessageResponse,
+        blog_payload_description::{
+            CreateBlogData, ResponseForGettingAllBlog, ResponseForGettingSingleBlog, UpdateBlog,
+        },
     },
-    payload_handler::stack_payload_handler::StackCreateRequest,
     state::AppState,
 };
 
 #[axum::debug_handler]
-pub async fn create_stack_router(
+pub async fn create_blog_router(
     AuthUser {
         id, email, name, ..
     }: AuthUser,
     State(state): State<AppState>,
-    Json(payload): Json<StackCreateRequest>,
+    payload: BlogCreateInput,
 ) -> Result<Json<serde_json::Value>, ApiErrors> {
-    let payload_data = payload.validate()?;
+    let title = Text::new(&payload.title)?;
 
-    let title = Text::new(&payload_data.title)?;
+    let description = Text::new(&payload.description)?;
 
-    let slug = Text::new(&payload_data.slug)?;
-
-    let stack = CreateStackData {
+    let blog = CreateBlogData {
         title,
-        slug,
+        description,
+        content: payload.content,
+        image: payload.image,
+        image_id: payload.image_id,
         created_by: id,
         created_by_name: name,
         created_by_email: email,
     };
 
-    let result = state.stack_services.create_stacks(stack).await?;
+    let result = state.blog_services.create_blog(blog).await?;
 
     let success_response = SuccessMessageResponse {
         message: format!("Stack created: {result}"),
@@ -48,45 +53,45 @@ pub async fn create_stack_router(
 }
 
 #[axum::debug_handler]
-pub async fn get_all_stack_router(
+pub async fn get_all_blog_router(
     State(state): State<AppState>,
 ) -> Result<Json<serde_json::Value>, ApiErrors> {
-    let stacks = state.stack_services.get_all_stack().await?;
+    let blogs = state.blog_services.get_all_blog().await?;
 
-    let success_response = ResponseForGettingAllStack {
+    let success_response = ResponseForGettingAllBlog {
         message: "success".to_string(),
-        stacks,
+        blogs,
     };
 
     Ok(Json(serde_json::json!(success_response)))
 }
 
 #[axum::debug_handler]
-pub async fn get_single_stack_router(
+pub async fn get_single_blog_router(
     State(state): State<AppState>,
     Path(path): Path<RequestUserIdPayload>,
 ) -> Result<Json<serde_json::Value>, ApiErrors> {
     let id = Uuid::parse_str(&path.id).map_err(|e| ApiErrors::InvalidString(e.to_string()))?;
 
-    let stack = state.stack_services.find_single_stack(&id).await?;
+    let blog = state.blog_services.find_single_blog(&id).await?;
 
-    let success_response = ResponseForGettingSingleStack {
+    let success_response = ResponseForGettingSingleBlog {
         message: "success".to_string(),
-        stack,
+        blog,
     };
 
     Ok(Json(serde_json::json!(success_response)))
 }
 
 #[axum::debug_handler]
-pub async fn get_delete_stack_router(
+pub async fn get_delete_blog_router(
     _: AuthUser,
     State(state): State<AppState>,
     Path(path): Path<RequestUserIdPayload>,
 ) -> Result<Json<serde_json::Value>, ApiErrors> {
     let id = Uuid::parse_str(&path.id).map_err(|e| ApiErrors::InvalidString(e.to_string()))?;
 
-    state.stack_services.delete_stack(&id).await?;
+    state.blog_services.delete_blog(&id).await?;
 
     let success_response = SuccessMessageResponse {
         message: "success".to_string(),
@@ -96,26 +101,28 @@ pub async fn get_delete_stack_router(
 }
 
 #[axum::debug_handler]
-pub async fn get_update_stack_router(
+pub async fn get_update_blog_router(
     AuthUser {
         id, email, name, ..
     }: AuthUser,
     State(state): State<AppState>,
     Path(path): Path<RequestUserIdPayload>,
-    Json(payload_data): Json<UpdateStackPayload>,
+    payload: BlogUpateInput,
 ) -> Result<Json<serde_json::Value>, ApiErrors> {
-    let user_id = Uuid::parse_str(&path.id).map_err(|e| ApiErrors::InvalidString(e.to_string()))?;
+    let blog_id = Uuid::parse_str(&path.id).map_err(|e| ApiErrors::InvalidString(e.to_string()))?;
 
-    let updated_stack = UpdateStack {
-        id: user_id,
-        title: payload_data.title,
-        slug: payload_data.slug,
+    let updated_blog = UpdateBlog {
+        blog_id,
+        description: payload.description,
+        content: payload.content,
+        image: payload.image,
+        image_id: payload.image_id,
         edited_by: id,
-        edited_by_name: email.as_str().to_string(),
-        edited_by_email: name.as_str().to_string(),
+        edited_by_name: name.as_str().to_string(),
+        edited_by_email: email.as_str().to_string(),
     };
 
-    state.stack_services.update_stack(updated_stack).await?;
+    state.blog_services.update_blog(updated_blog).await?;
 
     let success_response = SuccessMessageResponse {
         message: "success".to_string(),

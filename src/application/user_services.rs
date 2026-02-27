@@ -35,14 +35,16 @@ impl AuthUserServices {
 
         self.repo.create_user(&user).await?;
 
-        Ok(self.jwt.generate(&user.id.to_string()))
+        let token = self.jwt.generate(user.id)?;
+
+        Ok(token)
     }
 
     pub async fn sign_in_user(
         &self,
         email: &Email,
         password: &Password,
-    ) -> Result<String, ApiErrors> {
+    ) -> Result<Uuid, ApiErrors> {
         let user = self
             .repo
             .find_by_email(email)
@@ -53,7 +55,7 @@ impl AuthUserServices {
             return Err(ApiErrors::PasswordFail(password.as_str().to_string()));
         }
 
-        Ok(self.jwt.generate(&user.id.to_string()))
+        Ok(user.id)
     }
 
     pub async fn find_all_users(&self) -> Result<Vec<DirectUsersDetails>, ApiErrors> {

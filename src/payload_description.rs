@@ -1,4 +1,6 @@
+pub mod blog_payload_description;
 pub mod gobal_response_description;
+pub mod project_payload_description;
 pub mod stack_payload_description;
 pub mod user_payload_description;
 

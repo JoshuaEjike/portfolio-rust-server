@@ -2,9 +2,11 @@ use axum::{
     Json,
     extract::{Path, State},
 };
+use tower_cookies::Cookies;
 use uuid::Uuid;
 
 use crate::{
+    core::login_token_core::login_token_core,
     error::api_error::ApiErrors,
     extractor::auth_extractor::AuthUser,
     fields::{Email, Password, PhoneNumber, Roles, Text},
@@ -60,7 +62,7 @@ pub async fn auth_user_sign_up_router(
         name: name_data,
         email: email_data,
         password,
-        phone_number: phone_number,
+        phone_number,
         roles: roles_data,
         created_by: id,
         created_by_name: name,
@@ -78,6 +80,7 @@ pub async fn auth_user_sign_up_router(
 }
 
 pub async fn auth_user_sign_in_router(
+    cookies: Cookies,
     State(state): State<AppState>,
     Json(payload): Json<LoginRequest>,
 ) -> Result<Json<serde_json::Value>, ApiErrors> {
@@ -86,13 +89,15 @@ pub async fn auth_user_sign_in_router(
     let email = Email::new(&payload_data.email)?;
     let password = Password::new(&payload_data.password)?;
 
-    let token = state
+    let user = state
         .auth_user_service
         .sign_in_user(&email, &password)
         .await?;
 
+    let tokens = login_token_core(state.refresh_token_service, cookies, user).await?;
+
     let success_response = AuthSuccessResponse {
-        token,
+        token: tokens.access_token,
         message: "success".to_string(),
     };
 
@@ -174,7 +179,7 @@ pub async fn get_update_user_router(
     let roles = payload.roles.as_deref().and_then(|n| Roles::new(n).ok());
 
     let updated_user = UpdateUser {
-        id: user_id.clone(),
+        id: user_id,
         name: name_data,
         phone_number,
         password,

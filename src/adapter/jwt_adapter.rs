@@ -1,15 +1,14 @@
-use chrono::{Duration, Utc};
-use jsonwebtoken::{EncodingKey, Header, encode};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-use crate::port::jwt::JwtService;
+use crate::{core::jwt_core::generate_token, error::api_error::ApiErrors, port::jwt::JwtService};
 
 use jsonwebtoken::{DecodingKey, Validation, decode};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-struct Claims {
-    sub: String,
-    exp: usize,
+pub struct Claims {
+    pub sub: String,
+    pub exp: usize,
 }
 
 pub struct JwtServiceImpl {
@@ -27,23 +26,10 @@ impl JwtServiceImpl {
 }
 
 impl JwtService for JwtServiceImpl {
-    fn generate(&self, user_id: &str) -> String {
-        let expiration = Utc::now()
-            .checked_add_signed(Duration::seconds(self.expiry_second as i64))
-            .expect("valid timespame")
-            .timestamp();
+    fn generate(&self, user_id: Uuid) -> Result<String, ApiErrors> {
+        let token = generate_token(user_id, &self.secret, self.expiry_second)?;
 
-        let claims = Claims {
-            sub: user_id.to_string(),
-            exp: expiration as usize,
-        };
-
-        encode(
-            &Header::default(),
-            &claims,
-            &EncodingKey::from_secret(self.secret.as_ref()),
-        )
-        .expect("Failed to generate token")
+        Ok(token)
     }
 
     fn verify(&self, token: &str) -> Option<String> {
